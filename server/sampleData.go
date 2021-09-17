@@ -56,16 +56,37 @@ func (s Server) loadTestData() error {
 	c1 := createSampleUser(s, c)
 	c2 := createSampleUser(s, c)
 	c3 := createSampleUser(s, c)
+	c4 := createSampleUser(s, c)
+	c5 := createSampleUser(s, c)
+	c6 := createSampleUser(s, c)
+	c7 := createSampleUser(s, c)
+	c8 := createSampleUser(s, c)
+	c9 := createSampleUser(s, c)
+	c10 := createSampleUser(s, c)
 	r1 := createSampleRecord(s, r)
 	r2 := createSampleRecord(s, r)
 	r3 := createSampleRecord(s, r)
+	r4 := createSampleRecord(s, r)
+	r5 := createSampleRecord(s, r)
+	r6 := createSampleRecord(s, r)
+	r7 := createSampleRecord(s, r)
+	r8 := createSampleRecord(s, r)
+	r9 := createSampleRecord(s, r)
+	r10 := createSampleRecord(s, r)
 
 	a1 := assign(s, c1, r1)
 	a2 := assign(s, c2, r2)
 	a3 := assign(s, c3, r3)
+	a4 := assign(s, c4, r4)
+	a5 := assign(s, c5, r5)
+	a6 := assign(s, c6, r6)
+	a7 := assign(s, c7, r7)
+	a8 := assign(s, c8, r8)
+	a9 := assign(s, c9, r9)
+	a10 := assign(s, c10, r10)
 
 	count := 0
-	for x := range merge(a1, a2, a3) {
+	for x := range merge(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) {
 		count++
 		//fmt.Print("", x.RecordsCount)
 		fmt.Println("created user: ", x.User.Name, x.User.ID, x.Record.Name, x.Record.ID)
