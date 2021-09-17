@@ -2,18 +2,32 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 func (s Server) handlePostUsers(w http.ResponseWriter, req *http.Request) {
 
-	user := &User{Name: "Jakub"}
-	if result := s.DB.Create(user); result.Error != nil {
-		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return
+	}
+
+	m := map[string]interface{}{}
+	err = json.Unmarshal(body, &m)
+	if err != nil {
+		return
+	}
+
+	name, err := extractStringFromMap("name", m)
+	if err != nil {
+		return
+	}
+
+	user, err := s.createUser(name)
+	if err != nil {
 		return
 	}
 
@@ -23,12 +37,10 @@ func (s Server) handlePostUsers(w http.ResponseWriter, req *http.Request) {
 }
 
 func (s Server) handleGetUsers(w http.ResponseWriter, req *http.Request) {
-	params := mux.Vars(req)
-	log.Println(params)
 	limit, offset := defaultLimit, defaultOffset
 
-	if val, ok := params["limit"]; ok {
-		v, err := strconv.Atoi(val)
+	if len(req.FormValue("limit")) > 0 {
+		v, err := strconv.Atoi(req.FormValue("limit"))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -37,8 +49,8 @@ func (s Server) handleGetUsers(w http.ResponseWriter, req *http.Request) {
 		limit = v
 	}
 
-	if val, ok := params["offset"]; ok {
-		v, err := strconv.Atoi(val)
+	if len(req.FormValue("offset")) > 0 {
+		v, err := strconv.Atoi(req.FormValue("offset"))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -48,7 +60,7 @@ func (s Server) handleGetUsers(w http.ResponseWriter, req *http.Request) {
 	}
 
 	users := []User{}
-	if result := s.DB.Limit(limit).Offset(offset).Find(&users); result.Error != nil {
+	if result := s.db.Limit(limit).Offset(offset).Find(&users); result.Error != nil {
 
 		return
 	}
@@ -59,4 +71,14 @@ func (s Server) handleGetUsers(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Write(j)
+}
+
+func (s Server) createUser(name string) (*User, error) {
+	user := &User{Name: name}
+
+	if result := s.db.Create(user); result.Error != nil {
+		return nil, result.Error
+	}
+
+	return user, nil
 }

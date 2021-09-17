@@ -3,7 +3,7 @@ package main
 type User struct {
 	ID      int
 	Name    string
-	Records []UserRecord
+	Records []UserRecord `json:",omitempty"`
 }
 
 type Record struct {
@@ -15,6 +15,6 @@ type Record struct {
 type UserRecord struct {
 	RecordID int
 	UserID   int
-	Record   Record
-	User     User
+	Record   Record `json:",omitempty"`
+	User     User   `json:",omitempty"`
 }

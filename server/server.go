@@ -2,7 +2,10 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"net/http"
+	"runtime"
+	"time"
 
 	"github.com/gorilla/mux"
 	"gorm.io/driver/sqlite"
@@ -22,32 +25,43 @@ var defaultResponseHeaders = map[string]string{
 }
 
 type Server struct {
-	DB *gorm.DB
+	db *gorm.DB
+}
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 
 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed while connecting to database: %v", err)
 	}
 
+	db.Exec("PRAGMA foreign_keys = ON")
 	db.AutoMigrate(&User{}, &Record{}, &UserRecord{})
 
-	server := Server{DB: db}
+	server := Server{db: db}
+	err = server.loadTestData()
+	if err != nil {
+		log.Fatalf("Failed while loading sample data: %v", err)
+	}
 	m := mux.NewRouter()
 
-	u := m.PathPrefix("/{users:users\\/?}").Subrouter()
-	u.HandleFunc("/", server.handlePostUsers).Methods("POST")
-	u.HandleFunc("/", server.handleGetUsers).Methods("GET").Queries("limit", "{limit}", "offset", "{offset}")
+	m.HandleFunc("/{users:users\\/?}", server.handlePostUsers).Methods("POST")
+	m.HandleFunc("/{users:users\\/?}", server.handleGetUsers).Methods("GET")
 
-	r := u.PathPrefix("/{/{id}/records:/{id}/records\\/?}").Subrouter()
-	r.HandleFunc("/", server.handleGetRecords).Methods("GET")
-	r.HandleFunc("/", server.handlePostRecords).Methods("POST")
+	m.HandleFunc("/{records:records\\/?}", server.handlePostRecords).Methods("POST")
+	m.HandleFunc("/{records:records\\/?}", server.handleCountRecords).Methods("GET")
+
+	m.HandleFunc("/users/{id}/records/{recordID}", server.handleAssignRecordToUser).Methods("POST")
 
 	if err := http.ListenAndServe(":8000", m); err != nil {
 		log.Fatalf("Failed while starting server: %v", err)
 	}
 
 	log.Println("Server started")
+
 }
