@@ -176,22 +176,21 @@ func assign(s Server, c, r <-chan SampleType) <-chan SampleType {
 		for n := range r {
 			//arr := make([]SampleType, SampleAssignmentsPerUser)
 			for i := 0; i < SampleAssignmentsPerUser; i++ {
+				u := <-temp
 				go func() {
-
-					u := <-temp
 					err := s.assignRecordToUser(u.User.ID, n.Record.ID)
 					if err != nil {
 						fmt.Println("assign err: ", err)
 					}
-					n.User = u.User
-					n.RecordsCount += 1
-					out <- n
-					if n.RecordsCount < 20 {
-						go func() {
-							temp <- u
-						}()
-					}
 				}()
+				n.User = u.User
+				n.RecordsCount += 1
+				out <- n
+				if n.RecordsCount < 20 {
+					go func() {
+						temp <- u
+					}()
+				}
 			}
 		}
 		close(out)
