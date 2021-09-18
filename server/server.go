@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"math/rand"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 const (
@@ -33,9 +35,15 @@ func init() {
 }
 
 func main() {
+	sampleDataFlag := flag.Bool("load-sample-data", false, "Loads sample data. Default value: false")
+	dbPath := flag.String("db", "data.db", "Path to SQLite database file. New database will be created if provided path points to non-existing file. Default value: ./data.db")
+	flag.Parse()
+
 	rand.Seed(time.Now().UnixNano())
 
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(*dbPath), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		log.Fatalf("Failed while connecting to database: %v", err)
 	}
@@ -44,10 +52,10 @@ func main() {
 	db.AutoMigrate(&User{}, &Record{}, &UserRecord{})
 
 	server := Server{db: db}
-	err = server.loadTestData()
-	if err != nil {
-		log.Fatalf("Failed while loading sample data: %v", err)
+	if *sampleDataFlag == true {
+		server.loadTestData()
 	}
+
 	m := mux.NewRouter()
 
 	m.HandleFunc("/{users:users\\/?}", server.handlePostUsers).Methods("POST")

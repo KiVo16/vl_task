@@ -2,140 +2,198 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/schollz/progressbar/v3"
 )
 
 const SampleUsersDataSize = 1000
 const SampleRecordsDataSize = 500
 const SampleAssignmentsPerUser = 20
+const MaxRetries = 1
 
-type SampleType struct {
-	User         User
-	Record       Record
-	RecordsCount int
-	Err          error
+type SampleSummary struct {
+	Err     error
+	Retries int
 }
 
-func timeTrack(start time.Time, name string) {
-	elapsed := time.Since(start)
-	log.Printf("%s took %s", name, elapsed)
+type SampleSummaryI interface {
+	PrintSummary()
 }
+
+type SampleUserChanType struct {
+	User
+	AssignErr     error
+	AssignRetries int
+	SampleSummary
+}
+
+func (s SampleUserChanType) GenerateSummary() string {
+	return fmt.Sprintf("Type %v, retries: %d, error: %v\n, assignErr: %v, retriesAssign: %d", "User", s.Retries, s.Err, s.AssignErr, s.AssignRetries)
+}
+
+type SampleRecordChanType struct {
+	Record
+	SampleSummary
+}
+
+func (s SampleRecordChanType) GenerateSummary() string {
+	return fmt.Sprintf("Type %v, retries: %d, error: %v\n", "Record", s.Retries, s.Err)
+}
+
+var lastInsertedUserId, lastInsertedRecordsId int = -1, -1
+var userCount, recordsCount, assignErrorCount int64 = 0, 0, 0
+var availableRecords = []int{}
+
+var mu sync.Mutex
 
 func (s Server) loadTestData() error {
-	defer timeTrack(time.Now(), "factorial")
+	startTime := time.Now()
 
-	fileNames, err := ioutil.ReadFile("sampleNames.json")
+	fileNames, err := ioutil.ReadFile("./sampleData/sampleNames.json")
 	if err != nil {
 		return err
 	}
 
-	fileRecords, err := ioutil.ReadFile("sampleNames.json")
+	fileRecords, err := ioutil.ReadFile("./sampleData/sampleNames.json")
 	if err != nil {
 		return err
 	}
 
 	names := []string{}
+	records := []string{}
+
 	if err := json.Unmarshal(fileNames, &names); err != nil {
 		return err
 	}
 
-	records := []string{}
 	if err := json.Unmarshal(fileRecords, &records); err != nil {
 		return err
 	}
 
-	//	c := make(chan SampleType)
-	//c2 := make(chan SampleType)
+	lastUser := User{}
+	lastRecord := Record{}
 
-	c := genNamesStream(names...)
+	s.db.Last(&lastUser)
+	s.db.Last(&lastRecord)
+
+	lastInsertedUserId = lastUser.ID
+	lastInsertedRecordsId = lastRecord.ID
+
+	bar := progressbar.NewOptions(SampleUsersDataSize+SampleRecordsDataSize,
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionSetWidth(15),
+		progressbar.OptionSetDescription("Generating sample data..."),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}))
+
+	var wg sync.WaitGroup
+
+	c := genUsersStream(names...)
 	r := genRecordsStream(records...)
 	c1 := createSampleUser(s, c)
 	c2 := createSampleUser(s, c)
-	c3 := createSampleUser(s, c)
-	c4 := createSampleUser(s, c)
-	c5 := createSampleUser(s, c)
-	c6 := createSampleUser(s, c)
-	c7 := createSampleUser(s, c)
-	c8 := createSampleUser(s, c)
-	c9 := createSampleUser(s, c)
-	c10 := createSampleUser(s, c)
+	//c2 := createSampleUser(s, c)
+
 	r1 := createSampleRecord(s, r)
 	r2 := createSampleRecord(s, r)
-	r3 := createSampleRecord(s, r)
-	r4 := createSampleRecord(s, r)
-	r5 := createSampleRecord(s, r)
-	r6 := createSampleRecord(s, r)
-	r7 := createSampleRecord(s, r)
-	r8 := createSampleRecord(s, r)
-	r9 := createSampleRecord(s, r)
-	r10 := createSampleRecord(s, r)
+	//r2 := createSampleRecord(s, r)
 
-	a1 := assign(s, c1, r1)
-	a2 := assign(s, c2, r2)
-	a3 := assign(s, c3, r3)
-	a4 := assign(s, c4, r4)
-	a5 := assign(s, c5, r5)
-	a6 := assign(s, c6, r6)
-	a7 := assign(s, c7, r7)
-	a8 := assign(s, c8, r8)
-	a9 := assign(s, c9, r9)
-	a10 := assign(s, c10, r10)
+	b1 := assignRecordToUser(s, c1)
+	b2 := assignRecordToUser(s, c2)
 
-	count := 0
-	for x := range merge(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) {
-		count++
-		//fmt.Print("", x.RecordsCount)
-		fmt.Println("created user: ", x.User.Name, x.User.ID, x.Record.Name, x.Record.ID)
-	}
+	wg.Add(2)
+	go func(in ...<-chan SampleUserChanType) {
+		for user := range mergeUsers(in...) {
+			//	fmt.Println(user.GenerateSummary())
 
-	log.Println(count)
+			mu.Lock()
+			if user.Err == nil {
+				userCount += 1
+			}
 
-	//log.Println(arr)
+			if user.AssignErr != nil {
+				assignErrorCount++
+			}
+
+			bar.Add(1)
+			mu.Unlock()
+		}
+		wg.Done()
+	}(b1, b2)
+	go func(in ...<-chan SampleRecordChanType) {
+		for record := range mergeRecords(in...) {
+			//fmt.Println(record.GenerateSummary())
+
+			if record.Err == nil {
+				mu.Lock()
+
+				recordsCount += 1
+				bar.Add(1)
+				mu.Unlock()
+			}
+		}
+		wg.Done()
+	}(r1, r2)
+
+	wg.Wait()
+
+	log.Printf("\nSummary: created users = %d, created records = %d, record assign error: %d,operation took: %v", userCount, recordsCount, assignErrorCount, time.Since(startTime))
 
 	return nil
 }
 
-func genNamesStream(names ...string) <-chan SampleType {
-	out := make(chan SampleType)
+func genUsersStream(names ...string) chan SampleUserChanType {
+	out := make(chan SampleUserChanType)
 	go func() {
 		for i := 0; i < SampleUsersDataSize; i++ {
-			name := names[randRange(0, len(names))]
-			out <- SampleType{User: User{Name: name}}
+			name := names[randRange(0, len(names)-1)]
+			out <- SampleUserChanType{User: User{Name: name}}
 		}
 		close(out)
 	}()
 	return out
 }
 
-func genRecordsStream(records ...string) <-chan SampleType {
-	out := make(chan SampleType)
+func genRecordsStream(records ...string) chan SampleRecordChanType {
+	out := make(chan SampleRecordChanType)
 	go func() {
 		for i := 0; i < SampleRecordsDataSize; i++ {
-			idx := randRange(0, len(records))
+			idx := randRange(0, len(records)-1)
 			record := records[idx]
-			out <- SampleType{Record: Record{Name: record, Type: fmt.Sprintf("t%d", idx)}}
+			out <- SampleRecordChanType{Record: Record{Name: record, Type: fmt.Sprintf("t%d", idx)}}
 		}
 		close(out)
 	}()
 	return out
 }
 
-func createSampleUser(s Server, in <-chan SampleType) <-chan SampleType {
-	out := make(chan SampleType)
+func createSampleUser(s Server, in chan SampleUserChanType) chan SampleUserChanType {
+	out := make(chan SampleUserChanType)
 	go func() {
-		for n := range in {
-			u, err := s.createUser(n.User.Name)
+		for user := range in {
+			u, err := s.createUser(user.Name)
+
 			if err != nil {
-				n.Err = err
-				out <- n
+				user.Err = err
+				user.Retries += 1
+				out <- user
 				continue
 			}
-			n.User = *u
-			out <- n
+
+			user.User = *u
+			user.Err = nil
+			out <- user
 		}
 		close(out)
 	}()
@@ -143,16 +201,21 @@ func createSampleUser(s Server, in <-chan SampleType) <-chan SampleType {
 	return out
 }
 
-func createSampleRecord(s Server, in <-chan SampleType) <-chan SampleType {
-	out := make(chan SampleType)
+func createSampleRecord(s Server, in chan SampleRecordChanType) <-chan SampleRecordChanType {
+	out := make(chan SampleRecordChanType)
 	go func() {
 		for n := range in {
 			r, err := s.createRecord(n.Record.Name, n.Record.Type)
 			if err != nil {
 				n.Err = err
+				n.Retries += 1
 				out <- n
 				continue
 			}
+
+			mu.Lock()
+			availableRecords = append(availableRecords, r.ID)
+			mu.Unlock()
 			n.Record = *r
 			out <- n
 		}
@@ -161,49 +224,61 @@ func createSampleRecord(s Server, in <-chan SampleType) <-chan SampleType {
 	return out
 }
 
-func assign(s Server, c, r <-chan SampleType) <-chan SampleType {
-	out := make(chan SampleType)
-	temp := make(chan SampleType)
+func assignRecordToUser(s Server, c chan SampleUserChanType) <-chan SampleUserChanType {
+	out := make(chan SampleUserChanType)
 
 	go func() {
-		for n := range c {
-			temp <- n
-		}
-		close(temp)
-	}()
-
-	go func() {
-		for n := range r {
-			//arr := make([]SampleType, SampleAssignmentsPerUser)
+		for user := range c {
+			batch := []UserRecord{}
 			for i := 0; i < SampleAssignmentsPerUser; i++ {
-				u := <-temp
-				go func() {
-					err := s.assignRecordToUser(u.User.ID, n.Record.ID)
-					if err != nil {
-						fmt.Println("assign err: ", err)
-					}
-				}()
-				n.User = u.User
-				n.RecordsCount += 1
-				out <- n
-				if n.RecordsCount < 20 {
-					go func() {
-						temp <- u
-					}()
+				r := 0
+				if len(availableRecords) > 0 {
+					r = availableRecords[randRange(0, len(availableRecords)-1)]
+				} else {
+					r = randRange(0, lastInsertedRecordsId)
 				}
+
+				batch = append(batch, UserRecord{UserID: user.User.ID, RecordID: r})
 			}
+
+			if result := s.db.Create(&batch); result.Error != nil {
+				user.AssignErr = errors.New("test")
+				user.AssignRetries += 1
+			}
+			out <- user
 		}
 		close(out)
-		//close(temp)
 	}()
 	return out
 }
 
-func merge(cs ...<-chan SampleType) <-chan SampleType {
+func mergeUsers(cs ...<-chan SampleUserChanType) <-chan SampleUserChanType {
 	var wg sync.WaitGroup
-	out := make(chan SampleType)
+	out := make(chan SampleUserChanType)
 
-	output := func(c <-chan SampleType) {
+	output := func(c <-chan SampleUserChanType) {
+		for n := range c {
+			out <- n
+		}
+		wg.Done()
+	}
+	wg.Add(len(cs))
+	for _, c := range cs {
+		go output(c)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+	return out
+}
+
+func mergeRecords(cs ...<-chan SampleRecordChanType) <-chan SampleRecordChanType {
+	var wg sync.WaitGroup
+	out := make(chan SampleRecordChanType)
+
+	output := func(c <-chan SampleRecordChanType) {
 		for n := range c {
 			out <- n
 		}
