@@ -103,14 +103,23 @@ func (s Server) loadTestData() error {
 	r := genRecordsStream(records...)
 	c1 := createSampleUser(s, c)
 	c2 := createSampleUser(s, c)
+	c3 := createSampleUser(s, c)
+	c4 := createSampleUser(s, c)
+	c5 := createSampleUser(s, c)
 	//c2 := createSampleUser(s, c)
 
 	r1 := createSampleRecord(s, r)
 	r2 := createSampleRecord(s, r)
+	r3 := createSampleRecord(s, r)
+	r4 := createSampleRecord(s, r)
+	r5 := createSampleRecord(s, r)
 	//r2 := createSampleRecord(s, r)
 
 	b1 := assignRecordToUser(s, c1)
 	b2 := assignRecordToUser(s, c2)
+	b3 := assignRecordToUser(s, c3)
+	b4 := assignRecordToUser(s, c4)
+	b5 := assignRecordToUser(s, c5)
 
 	wg.Add(2)
 	go func(in ...<-chan SampleUserChanType) {
@@ -130,7 +139,7 @@ func (s Server) loadTestData() error {
 			mu.Unlock()
 		}
 		wg.Done()
-	}(b1, b2)
+	}(b1, b2, b3, b4, b5)
 	go func(in ...<-chan SampleRecordChanType) {
 		for record := range mergeRecords(in...) {
 			//fmt.Println(record.GenerateSummary())
@@ -144,7 +153,7 @@ func (s Server) loadTestData() error {
 			}
 		}
 		wg.Done()
-	}(r1, r2)
+	}(r1, r2, r3, r4, r5)
 
 	wg.Wait()
 
