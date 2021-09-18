@@ -1,2 +1,2 @@
 *.db
-!spec/*.db
+server/*.db
