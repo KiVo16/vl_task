@@ -22,10 +22,6 @@ type SampleSummary struct {
 	Retries int
 }
 
-type SampleSummaryI interface {
-	PrintSummary()
-}
-
 type SampleUserChanType struct {
 	User
 	AssignErr     error
@@ -103,23 +99,12 @@ func (s Server) loadTestData() error {
 	r := genRecordsStream(records...)
 	c1 := createSampleUser(s, c)
 	c2 := createSampleUser(s, c)
-	c3 := createSampleUser(s, c)
-	c4 := createSampleUser(s, c)
-	c5 := createSampleUser(s, c)
-	//c2 := createSampleUser(s, c)
 
 	r1 := createSampleRecord(s, r)
 	r2 := createSampleRecord(s, r)
-	r3 := createSampleRecord(s, r)
-	r4 := createSampleRecord(s, r)
-	r5 := createSampleRecord(s, r)
-	//r2 := createSampleRecord(s, r)
 
 	b1 := assignRecordToUser(s, c1)
 	b2 := assignRecordToUser(s, c2)
-	b3 := assignRecordToUser(s, c3)
-	b4 := assignRecordToUser(s, c4)
-	b5 := assignRecordToUser(s, c5)
 
 	wg.Add(2)
 	go func(in ...<-chan SampleUserChanType) {
@@ -139,7 +124,7 @@ func (s Server) loadTestData() error {
 			mu.Unlock()
 		}
 		wg.Done()
-	}(b1, b2, b3, b4, b5)
+	}(b1, b2)
 	go func(in ...<-chan SampleRecordChanType) {
 		for record := range mergeRecords(in...) {
 			//fmt.Println(record.GenerateSummary())
@@ -153,11 +138,11 @@ func (s Server) loadTestData() error {
 			}
 		}
 		wg.Done()
-	}(r1, r2, r3, r4, r5)
+	}(r1, r2)
 
 	wg.Wait()
 
-	log.Printf("\nSummary: created users = %d, created records = %d, record assign error: %d,operation took: %v", userCount, recordsCount, assignErrorCount, time.Since(startTime))
+	log.Printf("\nSummary: created users = %d, created records = %d, record assign error: %d, operation took: %v", userCount, recordsCount, assignErrorCount, time.Since(startTime))
 
 	return nil
 }

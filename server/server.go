@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -18,8 +17,6 @@ const (
 	version       = 1.0
 	defaultLimit  = 10
 	defaultOffset = -1
-
-	ErrValueShouldBeInt = "must be of type integer"
 )
 
 var defaultResponseHeaders = map[string]string{
@@ -28,10 +25,6 @@ var defaultResponseHeaders = map[string]string{
 
 type Server struct {
 	db *gorm.DB
-}
-
-func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func main() {
