@@ -70,8 +70,8 @@ Optional keys:
 | ------------- |:-------------:| -----:|
 | `-db`      | `test.db` | Path to SQLite database file. New database will be created if provided path points to non-existing file. |
 | `-load-sample-data`      | `false`      |   Loads sample data |
-| `-sample-records-names`      | `./sampleData/sampleRecords.json`      |    Path to sample data for records names creation. JSON must contains only array of single string values. |
-| `-sample-users-names`      | `./sampleData/sampleNames.json`      |    Path to sample data for users names creation. JSON must contains only array of single string values. |
+| `-sample-records-names`      | `../sampleData/sampleRecords.json`      |    Path to sample data for records names creation. JSON must contains only array of single string values. |
+| `-sample-users-names`      | `../sampleData/sampleNames.json`      |    Path to sample data for users names creation. JSON must contains only array of single string values. |
 
 ## Flag usage example
 
