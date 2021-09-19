@@ -104,7 +104,9 @@ func (s Server) loadTestData(namesPath, recordsPath string) error {
 	r2 := createSampleRecord(s, r)
 
 	b1 := assignRecordToUser(s, c1)
-	b2 := assignRecordToUser(s, c2)
+	b2 := assignRecordToUser(s, c1)
+	b3 := assignRecordToUser(s, c2)
+	b4 := assignRecordToUser(s, c2)
 
 	wg.Add(2)
 	go func(in ...<-chan SampleUserChanType) {
@@ -124,7 +126,7 @@ func (s Server) loadTestData(namesPath, recordsPath string) error {
 			mu.Unlock()
 		}
 		wg.Done()
-	}(b1, b2)
+	}(b1, b2, b3, b4)
 	go func(in ...<-chan SampleRecordChanType) {
 		for record := range mergeRecords(in...) {
 			//fmt.Println(record.GenerateSummary())
@@ -225,7 +227,32 @@ func assignRecordToUser(s Server, c <-chan SampleUserChanType) <-chan SampleUser
 	go func() {
 		for user := range c {
 			batch := []UserRecord{}
-			for i := 0; i < SampleDestAssignmentsPerUser; i++ {
+			count := 0
+			for count < SampleDestAssignmentsPerUser {
+				r := 0
+				if len(availableRecords) > 0 {
+					r = availableRecords[randRange(0, len(availableRecords)-1)]
+				} else {
+					r = randRange(0, lastInsertedRecordsId)
+				}
+
+				exists := false
+				for _, v := range batch {
+					if v.RecordID == r {
+						exists = true
+						break
+					}
+				}
+
+				if exists {
+					continue
+				}
+
+				batch = append(batch, UserRecord{UserID: user.User.ID, RecordID: r})
+				count++
+			}
+
+			/*for i := 0; i < SampleDestAssignmentsPerUser; i++ {
 				r := 0
 				if len(availableRecords) > 0 {
 					r = availableRecords[randRange(0, len(availableRecords)-1)]
@@ -234,7 +261,7 @@ func assignRecordToUser(s Server, c <-chan SampleUserChanType) <-chan SampleUser
 				}
 
 				batch = append(batch, UserRecord{UserID: user.User.ID, RecordID: r})
-			}
+			}*/
 
 			if err := s.db.Create(&batch).Error; err != nil {
 				user.AssignErr = errors.New("test")
