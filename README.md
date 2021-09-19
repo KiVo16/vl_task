@@ -29,6 +29,39 @@ Example response for: `GET` `/users?limit=1`
     ]
 }
 ```
+| Response        | Code           | 
+| ------------- |:-------------:| 
+| `ResponseStatusOK`      | `0` | 
+
+## Error Format
+Mandatory keys:
+- `http_code` - HTTP code
+- `error_code` - internal api error code
+
+Optional keys:
+- `message` - human readable message
+- `refers_to` - points to part where error occured. For example if request's body requires `name` as `string` and got `int` then value of this field will be `name`, because error refers to `name` key.
+- `detailed_error` - detailed error derived from goland `error` type. For example error threw by database.
+
+```json
+{
+    "http_code": 400,
+    "error_code": 1,
+    "refers_to": "name",
+    "message": "Expected string got int"
+}
+```
+
+
+| Error        | Code           | 
+| ------------- |:-------------:| 
+| `ErrValueNotFound`      | `0` | 
+| `ErrValueInvalidType`   | `1` |
+| `ErrBodyMissing`      | `2` | 
+| `ErrBodyRead`      | `3` | 
+| `ErrJsonInvalid`      | `4` |
+| `ErrInsertData`      | `5` | 
+| `ErrGetData`      | `6` | 
 
 ## Flags
 | Flag        | Default value           | Description  |
