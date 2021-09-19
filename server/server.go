@@ -84,8 +84,8 @@ func (s *Server) Run(ssl bool) {
 
 func main() {
 	sampleDataFlag := flag.Bool("load-sample-data", false, "Loads sample data.")
-	sampleDataNamesPathFlag := flag.String("sample-users-names", "./sampleData/sampleNames.json", "Path to sample data for user names creation. JSON must contains only array of single string values.")
-	sampleDataRecordsPathFlag := flag.String("sample-records-names", "./sampleData/sampleRecords.json", "Path to sample data for record names creation. JSON must contains only array of single string values.")
+	sampleDataNamesPathFlag := flag.String("sample-users-names", "./sampleData/sampleNames.json", "Path to sample data for users names creation. JSON must contains only array of single string values.")
+	sampleDataRecordsPathFlag := flag.String("sample-records-names", "./sampleData/sampleRecords.json", "Path to sample data for records names creation. JSON must contains only array of single string values.")
 	dbPath := flag.String("db", "data.db", "Path to SQLite database file. New database will be created if provided path points to non-existing file.")
 	flag.Parse()
 
