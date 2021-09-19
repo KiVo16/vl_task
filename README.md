@@ -43,7 +43,7 @@ Mandatory keys:
 Optional keys:
 - `message` - human readable message
 - `refers_to` - points to part where error occured. For example if request's body requires `name` as `string` and got `int` then value of this field will be `name`, because error refers to `name` key.
-- `detailed_error` - detailed error derived from goland `error` type. For example error threw by database.
+- `detailed_error` - detailed error derived from golang `error` type. For example error threw by database.
 
 ```json
 {
