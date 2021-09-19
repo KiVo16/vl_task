@@ -4,13 +4,14 @@ VL Rest was created to satify requirements of interview task provided by VoiceLa
 
 
 ## Endpoints
-| Path        | Method         | Query Params | Required Body | Mandatory Body keys |   Description |
+| Path        | Method         | Query Params | Requires Body | Mandatory Body keys |   Description |
 | ------------- |:----------:| :----: | :-----:| :----: |  ----:|
-| /users      | `GET` |`limit (int)` `offset (int)` | `false` | - |  Returns users. Both parameters are optional. |
-| /users      | `POST` | - | `true` | `name (string)` | Creates user with specified name |
+| /users      | `GET` |`limit (string)` `offset (string)` | `false` | - |  Returns users. Both parameters are optional. |
+| /users      | `POST` | - | `true` | `name (string) ` | Creates user with specified name |
 | /users/{user_id}/{record_id}      | `POST` |  - | `false` | - |  Assigns existing record to existing user  |
 | /records      | `GET` | `user_name (string)` `type (string)` | `false` | - | Counts records.  |
-| /records      | `POST` |  - | `true` | `name` `type` | Creates new record with type and name. |
+| /records      | `POST` |  - | `true` | `name (string)` `type (string)` | Creates new record with type and name. |
+
 
 ## Flags
 | Flag        | Default value           | Description  |
