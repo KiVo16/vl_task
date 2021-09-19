@@ -39,7 +39,7 @@ type SampleRecordChanType struct {
 }
 
 func (s SampleRecordChanType) GenerateSummary() string {
-	return fmt.Sprintf("Type %v,  retries: %d, error: %v\n", "Record", s.Retries, s.Err)
+	return fmt.Sprintf("Type %v, retries: %d, error: %v\n", "Record", s.Retries, s.Err)
 }
 
 var lastInsertedUserId, lastInsertedRecordsId int = -1, -1

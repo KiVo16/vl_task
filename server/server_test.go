@@ -82,7 +82,7 @@ func TestMain(m *testing.M) {
 	os.Remove("./test.db")
 
 	s.Init("./test.db")
-	s.Run(false)
+	s.Run()
 
 	if _, err := s.createUser("Michal"); err != nil {
 		log.Fatal(err)

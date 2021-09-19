@@ -56,7 +56,7 @@ func (s *Server) Init(dbPath string) {
 
 }
 
-func (s *Server) Run(tls bool) {
+func (s *Server) Run() {
 	s.srv = &http.Server{
 		Addr:         "0.0.0.0:8000",
 		WriteTimeout: time.Second * 15,
@@ -109,7 +109,7 @@ func main() {
 		}
 	}
 
-	server.Run(true)
+	server.Run()
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	signal.Notify(c, syscall.SIGTERM)
