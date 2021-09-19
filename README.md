@@ -64,6 +64,7 @@ Optional keys:
 | `ErrJsonInvalid`      | `4` |
 | `ErrInsertData`      | `5` | 
 | `ErrGetData`      | `6` | 
+| `ErrForeignKey`      | `7` | 
 
 ## Flags
 | Flag        | Default value           | Description  |
