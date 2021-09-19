@@ -89,6 +89,10 @@ func main() {
 	dbPath := flag.String("db", "data.db", "Path to SQLite database file. New database will be created if provided path points to non-existing file.")
 	flag.Parse()
 
+	if *dbPath == "./test.db" || *dbPath == "test.db" {
+		log.Fatalf("./test.db is reserved for testing. Provide different path.")
+	}
+
 	server := Server{}
 	server.Init(*dbPath)
 
