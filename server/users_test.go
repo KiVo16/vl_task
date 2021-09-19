@@ -40,7 +40,7 @@ func TestHandlePostUsers(t *testing.T) {
 func TestHandleGetUsers(t *testing.T) {
 
 	tests := []RestTest{
-		NewRestTest("/users?limit=1", "GET", TestMap{}, TestMap{"status": 0, "response": []TestMap{TestMap{"id": 1, "name": "Michał"}}}, http.StatusOK, false),
+		NewRestTest("/users?limit=1", "GET", TestMap{}, TestMap{"status": 0, "response": []TestMap{TestMap{"id": 1, "name": "Michal"}}}, http.StatusOK, false),
 		NewRestTest("/users?limit=1&offset=1", "GET", TestMap{}, TestMap{"status": 0, "response": []TestMap{TestMap{"id": 2, "name": "Ania"}}}, http.StatusOK, false),
 		NewRestTest("/users?limit=2&offset=1", "GET", TestMap{}, TestMap{"status": 0, "response": []TestMap{TestMap{"id": 2, "name": "Ania"}, TestMap{"id": 3, "name": "Dominika"}}}, http.StatusOK, false),
 		NewRestTest("/users?limit=sd", "GET", TestMap{}, TestMap{

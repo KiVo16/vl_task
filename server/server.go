@@ -73,7 +73,7 @@ func (s *Server) Run(ssl bool) {
 		if ssl {
 			err = s.srv.ListenAndServeTLS("../certificate.crt", "../certificate.key")
 		} else {
-			s.srv.ListenAndServe()
+			err = s.srv.ListenAndServe()
 		}
 
 		if err != nil {

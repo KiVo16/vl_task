@@ -43,6 +43,31 @@ func TestHandlePostRecords(t *testing.T) {
 
 }
 
+func TestHandleGetRecords(t *testing.T) {
+
+	tests := []RestTest{
+		NewRestTest("/records?user_name=Dominika&type=t1", "GET", TestMap{}, TestMap{"status": 0, "response": TestMap{"count": 2}}, http.StatusOK, false),
+		NewRestTest("/records?user_name=Dominika&type=t2", "GET", TestMap{}, TestMap{"status": 0, "response": TestMap{"count": 1}}, http.StatusOK, false),
+		NewRestTest("/records?user_name=Dominika", "GET", TestMap{}, TestMap{
+			"http_code":  http.StatusBadRequest,
+			"error_code": ErrValueNotFound,
+			"message":    errMap[ErrValueNotFound],
+			"refers_to":  "type",
+		}, http.StatusBadRequest, false),
+		NewRestTest("/records?type=t1", "GET", TestMap{}, TestMap{
+			"http_code":  http.StatusBadRequest,
+			"error_code": ErrValueNotFound,
+			"message":    errMap[ErrValueNotFound],
+			"refers_to":  "user_name",
+		}, http.StatusBadRequest, false),
+	}
+
+	for _, test := range tests {
+		test.Test(t)
+	}
+
+}
+
 func TestHandleAssignRecordToUser(t *testing.T) {
 
 	tests := []RestTest{

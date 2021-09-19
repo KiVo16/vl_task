@@ -164,8 +164,9 @@ func genRecordsStream(records ...string) chan SampleRecordChanType {
 	go func() {
 		for i := 0; i < SampleRecordsDataSize; i++ {
 			idx := randRange(0, len(records)-1)
+			t := randRange(0, 10)
 			record := records[idx]
-			out <- SampleRecordChanType{Record: Record{Name: record, Type: fmt.Sprintf("t%d", idx)}}
+			out <- SampleRecordChanType{Record: Record{Name: record, Type: fmt.Sprintf("t%d", t)}}
 		}
 		close(out)
 	}()

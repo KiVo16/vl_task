@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -73,8 +72,6 @@ func (s Server) handleAssignRecordToUser(w http.ResponseWriter, req *http.Reques
 		NewPredefinedServerError(http.StatusInternalServerError, ErrInsertData).WithDetailedError(err).Write(w)
 		return
 	}
-
-	log.Println(id, recordID)
 
 	NewResponse(ResponseStatusOK).WithResponse(struct {
 		UserID   int `json:"user_id"`

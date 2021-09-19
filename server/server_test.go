@@ -82,7 +82,7 @@ func TestMain(m *testing.M) {
 	s.Init("./test.db")
 	s.Run(false)
 
-	if _, err := s.createUser("Michał"); err != nil {
+	if _, err := s.createUser("Michal"); err != nil {
 		log.Fatal(err)
 	}
 
@@ -103,6 +103,16 @@ func TestMain(m *testing.M) {
 	}
 
 	if _, err := s.createRecord("R3", "t2"); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := s.assignRecordToUser(3, 1); err != nil {
+		log.Fatal(err)
+	}
+	if err := s.assignRecordToUser(3, 2); err != nil {
+		log.Fatal(err)
+	}
+	if err := s.assignRecordToUser(3, 3); err != nil {
 		log.Fatal(err)
 	}
 
