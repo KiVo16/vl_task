@@ -12,13 +12,13 @@ func TestExtractStringFromMap(t *testing.T) {
 		valName string
 		val     string
 		err     string
-		m       map[string]interface{}
+		m       TestMap
 	}{
-		{"name", "test", "", map[string]interface{}{"name": "test"}},
-		{"name", "", "", map[string]interface{}{"name": ""}},
-		{"name", "", ExtractErrInvalidType, map[string]interface{}{"name": 52}},
-		{"name", "", ExtractErrNotFound, map[string]interface{}{"test": 52}},
-		{"name", "", ExtractErrNotFound, map[string]interface{}{"test": 52}},
+		{"name", "test", "", TestMap{"name": "test"}},
+		{"name", "", "", TestMap{"name": ""}},
+		{"name", "", ExtractErrInvalidType, TestMap{"name": 52}},
+		{"name", "", ExtractErrNotFound, TestMap{"test": 52}},
+		{"name", "", ExtractErrNotFound, TestMap{"test": 52}},
 	}
 
 	for _, test := range tests {

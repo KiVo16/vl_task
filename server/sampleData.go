@@ -48,15 +48,15 @@ var availableRecords = []int{}
 
 var mu sync.Mutex
 
-func (s Server) loadTestData() error {
+func (s Server) loadTestData(namesPath, recordsPath string) error {
 	startTime := time.Now()
 
-	fileNames, err := ioutil.ReadFile("./sampleData/sampleNames.json")
+	fileNames, err := ioutil.ReadFile(namesPath)
 	if err != nil {
 		return err
 	}
 
-	fileRecords, err := ioutil.ReadFile("./sampleData/sampleNames.json")
+	fileRecords, err := ioutil.ReadFile(recordsPath)
 	if err != nil {
 		return err
 	}

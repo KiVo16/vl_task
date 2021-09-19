@@ -70,14 +70,12 @@ func (s *Server) Run(ssl bool) {
 
 	go func() {
 		var err error
-		if ssl {
-			err = s.srv.ListenAndServeTLS("../certificate.crt", "../certificate.key")
-		} else {
-			err = s.srv.ListenAndServe()
-		}
+		// err = s.srv.ListenAndServeTLS("../cert.crt", "../cert.key")
+
+		err = s.srv.ListenAndServe()
 
 		if err != nil {
-			log.Fatalf("Failed while starting server: %v", err)
+			log.Println(err)
 		}
 	}()
 	log.Println("Server started")
@@ -85,15 +83,19 @@ func (s *Server) Run(ssl bool) {
 }
 
 func main() {
-	sampleDataFlag := flag.Bool("load-sample-data", false, "Loads sample data. Default value: false")
-	dbPath := flag.String("db", "data.db", "Path to SQLite database file. New database will be created if provided path points to non-existing file. Default value: ./data.db")
+	sampleDataFlag := flag.Bool("load-sample-data", false, "Loads sample data.")
+	sampleDataNamesPathFlag := flag.String("sample-users-names", "./sampleData/sampleNames.json", "Path to sample data for user names creation. JSON must contains only array of single string values.")
+	sampleDataRecordsPathFlag := flag.String("sample-records-names", "./sampleData/sampleRecords.json", "Path to sample data for record names creation. JSON must contains only array of single string values.")
+	dbPath := flag.String("db", "data.db", "Path to SQLite database file. New database will be created if provided path points to non-existing file.")
 	flag.Parse()
 
 	server := Server{}
 	server.Init(*dbPath)
 
 	if *sampleDataFlag == true {
-		server.loadTestData()
+		if err := server.loadTestData(*sampleDataNamesPathFlag, *sampleDataRecordsPathFlag); err != nil {
+			log.Fatalf("Failed while loading sample data: %v", err)
+		}
 	}
 
 	server.Run(true)
