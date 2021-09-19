@@ -14,8 +14,8 @@ VL Rest was created to satify requirements of interview task provided by VoiceLa
 
 ## Response Format
 Response always contains 2 keys: 
--- `status` - response status
--- `response` - actual response from a given endpoint
+- `status` - response status
+- `response` - actual response from a given endpoint
 
 Example response for: `GET` `/users?limit=1`
 ```json
