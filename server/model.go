@@ -13,8 +13,8 @@ type Record struct {
 }
 
 type UserRecord struct {
-	RecordID int
-	UserID   int
+	RecordID int    `gorm:"primaryKey"`
+	UserID   int    `gorm:"primaryKey"`
 	Record   Record `json:",omitempty"`
 	User     User   `json:",omitempty"`
 }

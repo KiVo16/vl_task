@@ -56,7 +56,7 @@ func (s *Server) Init(dbPath string) {
 
 }
 
-func (s *Server) Run(ssl bool) {
+func (s *Server) Run(tls bool) {
 	s.srv = &http.Server{
 		Addr:         "0.0.0.0:8000",
 		WriteTimeout: time.Second * 15,
@@ -75,9 +75,11 @@ func (s *Server) Run(ssl bool) {
 
 	go func() {
 		var err error
-		// err = s.srv.ListenAndServeTLS("../cert.crt", "../cert.key")
-
+		//	if tls {
+		//	err = s.srv.ListenAndServeTLS("../localhost.pem", "../localhost-key.pem")
+		//} else {
 		err = s.srv.ListenAndServe()
+		//}
 
 		if err != nil {
 			log.Println(err)

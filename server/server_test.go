@@ -79,6 +79,8 @@ func (r RestTest) Test(t *testing.T) {
 var s Server
 
 func TestMain(m *testing.M) {
+	os.Remove("./test.db")
+
 	s.Init("./test.db")
 	s.Run(false)
 

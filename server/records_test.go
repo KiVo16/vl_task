@@ -72,8 +72,12 @@ func TestHandleAssignRecordToUser(t *testing.T) {
 
 	tests := []RestTest{
 		NewRestTest("/users/1/records/1", "POST", TestMap{}, TestMap{"status": 0, "response": TestMap{"user_id": 1, "record_id": 1}}, http.StatusOK, false),
-		NewRestTest("/users/1/records/1", "POST", TestMap{}, TestMap{"status": 0, "response": TestMap{"user_id": 1, "record_id": 1}}, http.StatusOK, false),
 		NewRestTest("/users/1/records/2", "POST", TestMap{}, TestMap{"status": 0, "response": TestMap{"user_id": 1, "record_id": 2}}, http.StatusOK, false),
+		NewRestTest("/users/1/records/1", "POST", TestMap{}, TestMap{
+			"http_code":  http.StatusInternalServerError,
+			"error_code": ErrInsertData,
+			"message":    errMap[ErrInsertData],
+		}, http.StatusInternalServerError, false),
 		NewRestTest("/users/s/records/1", "POST", TestMap{}, TestMap{
 			"http_code":  http.StatusBadRequest,
 			"error_code": ErrValueInvalidType,
