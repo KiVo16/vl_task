@@ -4,6 +4,8 @@
 
 VL Rest was created to satify requirements of interview task provided by VoiceLab. It's based on Gorilla Mux and Gorm library for database manipulations. Only SQLite is supported.
 
+##### Server runs on port 8000
+
 
 ## Endpoints
 | Path        | Method         | Query Params | Requires Body | Mandatory Body keys |   Description |
@@ -12,7 +14,7 @@ VL Rest was created to satify requirements of interview task provided by VoiceLa
 | /users      | `POST` | - | `true` | `name (string) ` | Creates user with specified name |
 | /users/{`user_id`}/{`record_id`}      | `POST` |  - | `false` | - |  Assigns existing record to existing user  |
 | /records      | `GET` | `user_name (string)` `type (string)` | `false` | - | Counts records.  |
-| /records      | `POST` |  - | `true` | `name (string)` `type (string)` | Creates new record with type and name. |
+| /records      | `POST` |  - | `true` | `name (string)` `type (string)` | Creates new record with specified type and specified name. |
 
 ## Response Format
 Response always contains 2 keys: 
