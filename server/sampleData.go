@@ -147,7 +147,7 @@ func (s Server) loadTestData(namesPath, recordsPath string) error {
 	return nil
 }
 
-func genUsersStream(names ...string) chan SampleUserChanType {
+func genUsersStream(names ...string) <-chan SampleUserChanType {
 	out := make(chan SampleUserChanType)
 	go func() {
 		for i := 0; i < SampleUsersDataSize; i++ {
@@ -159,7 +159,7 @@ func genUsersStream(names ...string) chan SampleUserChanType {
 	return out
 }
 
-func genRecordsStream(records ...string) chan SampleRecordChanType {
+func genRecordsStream(records ...string) <-chan SampleRecordChanType {
 	out := make(chan SampleRecordChanType)
 	go func() {
 		for i := 0; i < SampleRecordsDataSize; i++ {
@@ -173,7 +173,7 @@ func genRecordsStream(records ...string) chan SampleRecordChanType {
 	return out
 }
 
-func createSampleUser(s Server, in chan SampleUserChanType) chan SampleUserChanType {
+func createSampleUser(s Server, in <-chan SampleUserChanType) <-chan SampleUserChanType {
 	out := make(chan SampleUserChanType)
 	go func() {
 		for user := range in {
@@ -196,8 +196,8 @@ func createSampleUser(s Server, in chan SampleUserChanType) chan SampleUserChanT
 	return out
 }
 
-func createSampleRecord(s Server, in chan SampleRecordChanType) <-chan SampleRecordChanType {
-	out := make(chan SampleRecordChanType)
+func createSampleRecord(s Server, in <-chan SampleRecordChanType) <-chan SampleRecordChanType {
+	out := make(chan SampleRecordChanType, 5)
 	go func() {
 		for n := range in {
 			r, err := s.createRecord(n.Record.Name, n.Record.Type)
@@ -219,7 +219,7 @@ func createSampleRecord(s Server, in chan SampleRecordChanType) <-chan SampleRec
 	return out
 }
 
-func assignRecordToUser(s Server, c chan SampleUserChanType) <-chan SampleUserChanType {
+func assignRecordToUser(s Server, c <-chan SampleUserChanType) <-chan SampleUserChanType {
 	out := make(chan SampleUserChanType)
 
 	go func() {

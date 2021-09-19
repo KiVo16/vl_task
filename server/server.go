@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -31,6 +32,10 @@ type Server struct {
 	m   *mux.Router
 	srv *http.Server
 	db  *gorm.DB
+}
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
 
 func (s *Server) Init(dbPath string) {
