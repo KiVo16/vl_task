@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -16,16 +15,18 @@ const (
 	ErrJsonInvalid
 	ErrInsertData
 	ErrGetData
+	ErrForeignKey
 )
 
 var errMap = map[int]string{
 	ErrValueNotFound:    "Value not found",
-	ErrValueInvalidType: "Expected %v instead got %v",
+	ErrValueInvalidType: "Expected %v",
 	ErrBodyMissing:      "Body is missing",
 	ErrBodyRead:         "Body read error",
 	ErrJsonInvalid:      "Invalid json",
 	ErrInsertData:       "Error while inserting data",
 	ErrGetData:          "Error while getting data",
+	ErrForeignKey:       "Can't insert data which not satisfy foreign keys. Probably values for foreign keys don't have corresponding records in other tables",
 }
 
 type ServerError struct {
@@ -41,7 +42,6 @@ func NewServerError(httpError, errorCode int) *ServerError {
 }
 
 func NewPredefinedServerError(httpError, errorCode int, args ...interface{}) *ServerError {
-	log.Println(errMap[errorCode])
 	return &ServerError{ErrorCode: errorCode, HTTPCode: httpError, Message: fmt.Sprintf(errMap[errorCode], args...)}
 }
 

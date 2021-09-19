@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"strconv"
 
 	"gorm.io/gorm"
@@ -54,7 +53,7 @@ func (s Server) handleGetUsers(w http.ResponseWriter, req *http.Request) {
 	if len(req.FormValue("limit")) > 0 {
 		v, err := strconv.Atoi(req.FormValue("limit"))
 		if err != nil {
-			NewPredefinedServerError(http.StatusBadRequest, ErrValueInvalidType, "int", reflect.TypeOf(v)).WithRefersTo("limit").WithDetailedError(err).Write(w)
+			NewPredefinedServerError(http.StatusBadRequest, ErrValueInvalidType, "int").WithRefersTo("limit").WithDetailedError(err).Write(w)
 			return
 		}
 
@@ -64,7 +63,7 @@ func (s Server) handleGetUsers(w http.ResponseWriter, req *http.Request) {
 	if len(req.FormValue("offset")) > 0 {
 		v, err := strconv.Atoi(req.FormValue("offset"))
 		if err != nil {
-			NewPredefinedServerError(http.StatusBadRequest, ErrValueInvalidType, "int", reflect.TypeOf(v)).WithRefersTo("offset").WithDetailedError(err).Write(w)
+			NewPredefinedServerError(http.StatusBadRequest, ErrValueInvalidType, "int").WithRefersTo("offset").WithDetailedError(err).Write(w)
 			return
 		}
 
@@ -87,8 +86,8 @@ func (s Server) handleGetUsers(w http.ResponseWriter, req *http.Request) {
 func (s Server) createUser(name string) (*User, error) {
 	user := &User{Name: name}
 
-	if result := s.db.Create(user); result.Error != nil {
-		return nil, result.Error
+	if err := s.db.Create(user).Error; err != nil {
+		return nil, err
 	}
 
 	return user, nil

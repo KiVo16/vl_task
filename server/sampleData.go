@@ -235,7 +235,7 @@ func assignRecordToUser(s Server, c chan SampleUserChanType) <-chan SampleUserCh
 				batch = append(batch, UserRecord{UserID: user.User.ID, RecordID: r})
 			}
 
-			if result := s.db.Create(&batch); result.Error != nil {
+			if err := s.db.Create(&batch).Error; err != nil {
 				user.AssignErr = errors.New("test")
 				user.AssignRetries += 1
 			}

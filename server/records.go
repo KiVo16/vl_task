@@ -3,8 +3,8 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"reflect"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -52,20 +52,29 @@ func (s Server) handleAssignRecordToUser(w http.ResponseWriter, req *http.Reques
 
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-		NewPredefinedServerError(http.StatusBadRequest, ErrValueInvalidType, "int", reflect.TypeOf(id)).WithRefersTo("id").WithDetailedError(err).Write(w)
+		NewPredefinedServerError(http.StatusBadRequest, ErrValueInvalidType, "int").WithRefersTo("user_id").WithDetailedError(err).Write(w)
 		return
 	}
 
 	recordID, err := strconv.Atoi(params["recordID"])
 	if err != nil {
-		NewPredefinedServerError(http.StatusBadRequest, ErrValueInvalidType, "int", reflect.TypeOf(recordID)).WithRefersTo("record_id").WithDetailedError(err).Write(w)
+		NewPredefinedServerError(http.StatusBadRequest, ErrValueInvalidType, "int").WithRefersTo("record_id").WithDetailedError(err).Write(w)
 		return
 	}
 
 	if err := s.assignRecordToUser(id, recordID); err != nil {
+		if err.Error() == "FOREIGN KEY constraint failed" {
+			// Nie wiem, którego kodu http użyć. Jest to błąd po stronie serwera spowodowany złymi danymi, które są przyczyną błędu
+			// po wykonaniu requestu do bazy. Nie są błęde w samym zapytaniu więc http.StatusBadRequest raczej odpada.
+			NewPredefinedServerError(http.StatusInternalServerError, ErrForeignKey).WithDetailedError(err).Write(w)
+			return
+		}
+
 		NewPredefinedServerError(http.StatusInternalServerError, ErrInsertData).WithDetailedError(err).Write(w)
 		return
 	}
+
+	log.Println(id, recordID)
 
 	NewResponse(ResponseStatusOK).WithResponse(struct {
 		UserID   int `json:"user_id"`
@@ -108,8 +117,8 @@ func (s Server) handleCountRecords(w http.ResponseWriter, req *http.Request) {
 func (s Server) createRecord(name, t string) (*Record, error) {
 	record := &Record{Name: name, Type: t}
 
-	if result := s.db.Create(record); result.Error != nil {
-		return nil, result.Error
+	if err := s.db.Create(record).Error; err != nil {
+		return nil, err
 	}
 
 	return record, nil
@@ -121,8 +130,8 @@ func (s Server) assignRecordToUser(userID, recordID int) error {
 		RecordID: recordID,
 	}
 
-	if result := s.db.Create(a); result.Error != nil {
-		return result.Error
+	if err := s.db.Create(a).Error; err != nil {
+		return err
 	}
 
 	return nil

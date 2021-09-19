@@ -1,10 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -24,17 +28,15 @@ var defaultResponseHeaders = map[string]string{
 }
 
 type Server struct {
-	db *gorm.DB
+	m   *mux.Router
+	srv *http.Server
+	db  *gorm.DB
 }
 
-func main() {
-	sampleDataFlag := flag.Bool("load-sample-data", false, "Loads sample data. Default value: false")
-	dbPath := flag.String("db", "data.db", "Path to SQLite database file. New database will be created if provided path points to non-existing file. Default value: ./data.db")
-	flag.Parse()
-
+func (s *Server) Init(dbPath string) {
 	rand.Seed(time.Now().UnixNano())
 
-	db, err := gorm.Open(sqlite.Open(*dbPath), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
@@ -44,25 +46,70 @@ func main() {
 	db.Exec("PRAGMA foreign_keys = ON")
 	db.AutoMigrate(&User{}, &Record{}, &UserRecord{})
 
-	server := Server{db: db}
+	s.db = db
+	s.m = mux.NewRouter()
+
+}
+
+func (s *Server) Run(ssl bool) {
+	s.srv = &http.Server{
+		Addr:         "0.0.0.0:8000",
+		WriteTimeout: time.Second * 15,
+		ReadTimeout:  time.Second * 15,
+		IdleTimeout:  time.Second * 60,
+		Handler:      s.m,
+	}
+
+	s.m.HandleFunc("/{users:users\\/?}", s.handlePostUsers).Methods("POST")
+	s.m.HandleFunc("/{users:users\\/?}", s.handleGetUsers).Methods("GET")
+
+	s.m.HandleFunc("/{records:records\\/?}", s.handlePostRecords).Methods("POST")
+	s.m.HandleFunc("/{records:records\\/?}", s.handleCountRecords).Methods("GET")
+
+	s.m.HandleFunc("/users/{id}/records/{recordID}", s.handleAssignRecordToUser).Methods("POST")
+
+	go func() {
+		var err error
+		if ssl {
+			err = s.srv.ListenAndServeTLS("../certificate.crt", "../certificate.key")
+		} else {
+			s.srv.ListenAndServe()
+		}
+
+		if err != nil {
+			log.Fatalf("Failed while starting server: %v", err)
+		}
+	}()
+	log.Println("Server started")
+
+}
+
+func main() {
+	sampleDataFlag := flag.Bool("load-sample-data", false, "Loads sample data. Default value: false")
+	dbPath := flag.String("db", "data.db", "Path to SQLite database file. New database will be created if provided path points to non-existing file. Default value: ./data.db")
+	flag.Parse()
+
+	server := Server{}
+	server.Init(*dbPath)
+
 	if *sampleDataFlag == true {
 		server.loadTestData()
 	}
 
-	m := mux.NewRouter()
+	server.Run(true)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, syscall.SIGTERM)
 
-	m.HandleFunc("/{users:users\\/?}", server.handlePostUsers).Methods("POST")
-	m.HandleFunc("/{users:users\\/?}", server.handleGetUsers).Methods("GET")
+	<-c
 
-	m.HandleFunc("/{records:records\\/?}", server.handlePostRecords).Methods("POST")
-	m.HandleFunc("/{records:records\\/?}", server.handleCountRecords).Methods("GET")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
-	m.HandleFunc("/users/{id}/records/{recordID}", server.handleAssignRecordToUser).Methods("POST")
-
-	if err := http.ListenAndServe(":8000", m); err != nil {
-		log.Fatalf("Failed while starting server: %v", err)
+	if err := server.srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server gracefull shutdown failed: %v", err)
 	}
 
-	log.Println("Server started")
-
+	log.Println("Server is shutting down")
+	os.Exit(0)
 }
