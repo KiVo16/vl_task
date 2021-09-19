@@ -1,6 +1,6 @@
 # VL REST
 ![CI](https://github.com/KiVo16/vl_task/actions/workflows/go.yml/badge.svg)
-[![codecov](https://codecov.io/gh/KiVo16/vl_task/branch/master/graph/badge.svg)](https://codecov.io/gh/kivo16/vl_task)
+[![codecov](https://codecov.io/gh/KiVo16/vl_task/branch/main/graph/badge.svg?token=DJBUA43SG1)](https://codecov.io/gh/KiVo16/vl_task)
 
 VL Rest was created to satify requirements of interview task provided by VoiceLab. It's based on Gorilla Mux and Gorm library for database manipulations. Only SQLite is supported.
 
