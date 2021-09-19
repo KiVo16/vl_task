@@ -73,7 +73,7 @@ func (s Server) handleGetUsers(w http.ResponseWriter, req *http.Request) {
 	users := []User{}
 	if err := s.db.Limit(limit).Offset(offset).Find(&users).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-
+			NewResponse(ResponseStatusOK).WithResponse(users).Write(w)
 			return
 		}
 		NewPredefinedServerError(http.StatusInternalServerError, ErrGetData).WithDetailedError(err).Write(w)
