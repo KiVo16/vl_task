@@ -18,6 +18,7 @@ require (
 	golang.org/x/crypto v0.0.0-20210915214749-c084706c2272 // indirect
 	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678 // indirect
 	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf // indirect
+	golang.org/x/tools v0.1.6 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 	gorm.io/driver/sqlite v1.1.5 // indirect
 	gorm.io/gorm v1.21.15 // indirect
