@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
 
@@ -34,9 +33,10 @@ type Server struct {
 	db  *gorm.DB
 }
 
+/*
 func init() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-}
+}*/
 
 func (s *Server) Init(dbPath string) {
 	rand.Seed(time.Now().UnixNano())

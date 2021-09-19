@@ -14,7 +14,7 @@ import (
 
 const SampleUsersDataSize = 1000
 const SampleRecordsDataSize = 500
-const SampleAssignmentsPerUser = 20
+const SampleDestAssignmentsPerUser = 20
 const MaxRetries = 1
 
 type SampleSummary struct {
@@ -142,7 +142,7 @@ func (s Server) loadTestData(namesPath, recordsPath string) error {
 
 	wg.Wait()
 
-	log.Printf("\nSummary: created users = %d, created records = %d, record assign error: %d, operation took: %v", userCount, recordsCount, assignErrorCount, time.Since(startTime))
+	log.Printf("\nSummary: created users = %d, created records = %d, operation took: %v", userCount, recordsCount, time.Since(startTime))
 
 	return nil
 }
@@ -225,7 +225,7 @@ func assignRecordToUser(s Server, c <-chan SampleUserChanType) <-chan SampleUser
 	go func() {
 		for user := range c {
 			batch := []UserRecord{}
-			for i := 0; i < SampleAssignmentsPerUser; i++ {
+			for i := 0; i < SampleDestAssignmentsPerUser; i++ {
 				r := 0
 				if len(availableRecords) > 0 {
 					r = availableRecords[randRange(0, len(availableRecords)-1)]
